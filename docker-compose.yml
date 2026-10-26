@@ -1,0 +1,76 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: bill-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: exam_2400031787
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: admin123
+    ports:
+      - "5434:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d exam_2400031787"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - bill-network
+
+  eureka:
+    build:
+      context: ./EurekaService
+      dockerfile: Dockerfile
+    image: priyankakora/eureka-server:1.0
+    container_name: bill-eureka
+    restart: unless-stopped
+    ports:
+      - "18081:8761"
+    networks:
+      - bill-network
+
+  backend:
+    build:
+      context: ./CrudServiceProject
+      dockerfile: Dockerfile
+    image: priyankakora/docker-backend-2400031787:1.0
+    container_name: bill-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      eureka:
+        condition: service_started
+    environment:
+      SERVER_PORT: 8081
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/exam_2400031787
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: admin123
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka:8761/eureka/
+    ports:
+      - "8081:8081"
+    networks:
+      - bill-network
+
+  frontend:
+    build:
+      context: ./ElectricityBillFrontend
+      dockerfile: Dockerfile
+    image: priyankakora/docker-frontend-2400031787:1.0
+    container_name: bill-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "3001:80"
+    networks:
+      - bill-network
+
+volumes:
+  pgdata:
+
+networks:
+  bill-network:
+    driver: bridge
