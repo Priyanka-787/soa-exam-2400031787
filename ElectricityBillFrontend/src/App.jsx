@@ -1,3 +1,4 @@
+
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { addBill, deleteBill, getBills } from "./api.js";
 import Stats from "./components/Stats.jsx";
@@ -24,7 +25,7 @@ export default function App() {
       setBills(await getBills());
     } catch (e) {
       setError(
-        "Backend ki connect avvaledu. Spring Boot app (port 8081) run avutundo ledo check cheyandi."
+        "Unable to connect to the backend. Please check whether the Spring Boot application is running on port 8081."
       );
     } finally {
       setLoading(false);
@@ -39,22 +40,22 @@ export default function App() {
     try {
       const saved = await addBill(bill);
       setBills((prev) => [...prev, saved]);
-      notify("success", "Bill add ayyindi ✅");
+      notify("success", "Bill added successfully!");
       return true;
     } catch (e) {
-      notify("error", e.message);
+      notify("error", e.message || "Failed to add the bill. Please try again.");
       return false;
     }
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm(`Bill #${id} ni delete cheyyalani confirm aa?`)) return;
+    if (!window.confirm(`Are you sure you want to delete Bill #${id}?`)) return;
     try {
       await deleteBill(id);
       setBills((prev) => prev.filter((b) => b.id !== id));
-      notify("success", `Bill #${id} delete ayyindi 🗑️`);
+      notify("success", `Bill #${id} deleted successfully!`);
     } catch (e) {
-      notify("error", e.message);
+      notify("error", e.message || "Failed to delete the bill. Please try again.");
     }
   };
 
@@ -93,7 +94,7 @@ export default function App() {
             <div className="controls">
               <input
                 type="search"
-                placeholder="Search name / month..."
+                placeholder="Search by name or month..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
               />
